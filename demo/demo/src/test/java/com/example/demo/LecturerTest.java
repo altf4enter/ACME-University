@@ -1,39 +1,81 @@
 package com.example.demo;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.example.demo.model.Lecturer;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 
-import static org.springframework.mock.http.server.reactive.MockServerHttpRequest.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @AutoConfigureMockMvc
 public class LecturerTest {
 
+    private String baseUrl;
+    private Lecturer lecturer;
+
+    LecturerTest(){
+        baseUrl =  "http://localhost:8080/lecturer";
+        lecturer = new Lecturer();
+        lecturer.setName("Lecturer");
+        lecturer.setSurname("McLecturer");
+        lecturer.setId(1L);
+    }
+
 
     @Autowired
     private MockMvc mockMvc;
 
+    @Autowired
+    private ObjectMapper objectMapper;
+
     @Test
     void testCreateLecturer() throws Exception {
-        String userJson = "{\"name\":\"Helen\",\"email\":\"helen@example.com\"}";
 
-        mockMvc.perform(post("/users")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(userJson))
+        mockMvc.perform(delete(baseUrl + "")
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
+
+
+        mockMvc.perform(post(baseUrl + "/lecturer")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(lecturer)))
+                .andExpect(status().isOk());
+
+        //try again and expect a conflict message
+        mockMvc.perform(post(baseUrl + "/lecturer")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(lecturer)))
+                .andExpect(status().isConflict());
     }
 
     @Test
     void testRetrieveLecturer() throws Exception {
-        String userJson = "{\"name\":\"Helen\",\"email\":\"helen@example.com\"}";
-
-        mockMvc.perform(post("/users")
+        String lecturerId;
+        MvcResult result = mockMvc.perform(post(baseUrl)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(userJson))
-                .andExpect(status().isOk());
+                        .content(objectMapper.writeValueAsString(lecturer)))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        // Convert JSON response to Lecturer object
+        String responseJson = result.getResponse().getContentAsString();
+        Lecturer lecturer = objectMapper.readValue(responseJson, Lecturer.class);
+
+        MvcResult res = mockMvc.perform(get(baseUrl +"/"+  lecturer.getId().toString())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk()).andReturn();
+
+        String resJson = res.getResponse().getContentAsString();
+        Lecturer responseLecturer = objectMapper.readValue(resJson, Lecturer.class);
+
+
     }
 }

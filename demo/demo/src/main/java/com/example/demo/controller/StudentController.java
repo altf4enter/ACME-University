@@ -1,15 +1,14 @@
-package controller;
+package com.example.demo.controller;
 
-import model.Lecturer;
-import model.Person;
-import model.Student;
+import com.example.demo.model.Student;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import repository.LecturerRepository;
-import repository.StudentRepository;
+import com.example.demo.repository.LecturerRepository;
+import com.example.demo.repository.StudentRepository;
 
 @RestController
+@RequestMapping("/student")
 public class StudentController {
     private StudentRepository studentRepository;
     private LecturerRepository lecturerRepository;
@@ -26,7 +25,7 @@ public class StudentController {
         }
 
         lecturer.ifPresent(lect -> {
-                    lecturers.add(lect.getLecturerId().toString());
+                    lecturers.add(lect.getId().toString());
                 }
         );
         student.setLecturerIds(lecturers);
