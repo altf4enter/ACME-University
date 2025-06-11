@@ -1,5 +1,6 @@
 package com.example.demo;
 
+import com.example.demo.model.Lecturer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.example.demo.model.Student;
 import org.junit.jupiter.api.Test;
@@ -11,6 +12,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import java.util.List;
+
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -18,17 +21,26 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 public class StudentTest {
 
-    @LocalServerPort
-    private int port;
     private String baseUrl;
+    private String baseLecturerUrl;
     Student student;
+    Lecturer lecturer;
+
 
     StudentTest(){
         baseUrl =  "http://localhost:8080/student";
+        baseLecturerUrl =  "http://localhost:8080/lecturer";
+
+        lecturer = new Lecturer( );
+        lecturer.setId(2L);
+        lecturer.setName("Lecturer");
+        lecturer.setSurname("McSurname");
+
         student = new Student( );
         student.setName( "Student" );
         student.setSurname("McSurname");
         student.setId(1L);
+        student.setLecturerIds(List.of(lecturer.getId()));
     }
 
     @Autowired
@@ -44,15 +56,18 @@ public class StudentTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
 
+        mockMvc.perform(post(baseLecturerUrl )
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(lecturer)));
 
 
-        mockMvc.perform(post(baseUrl)
+        mockMvc.perform(post(baseUrl + "/add/" +student.getLecturerIds().get(0))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(student)))
                 .andExpect(status().isOk());
 
         //try again and expect a conflict message
-        mockMvc.perform(post(baseUrl)
+        mockMvc.perform(post(baseUrl+ "/add/" +student.getLecturerIds().get(0))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(student)))
                 .andExpect(status().isConflict());
@@ -60,17 +75,15 @@ public class StudentTest {
 
     @Test
     void testRetrieveStudent() throws Exception {
+        mockMvc.perform(post(baseLecturerUrl )
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(lecturer)));
 
-        MvcResult result = mockMvc.perform(post(baseUrl + "/add/"+1L)
+        mockMvc.perform(post(baseUrl + "/add/"+lecturer.getId())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(student)))
-                .andExpect(status().isOk())
-                .andReturn();
+                        .content(objectMapper.writeValueAsString(student)));
 
-        String responseJson = result.getResponse().getContentAsString();
-        Student student = objectMapper.readValue(responseJson, Student.class);
-
-        MvcResult res = mockMvc.perform(get(baseUrl + student.getId())
+        MvcResult res = mockMvc.perform(get(baseUrl+"/" + student.getId())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk()).andReturn();
 

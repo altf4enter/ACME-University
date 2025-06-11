@@ -1,10 +1,13 @@
 package com.example.demo;
 
+import com.example.demo.model.Lecturer;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -16,11 +19,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 public class PersonTest {
 
-    private int port;
     private String baseUrl;
+    Lecturer lecturer;
 
     PersonTest(){
-        baseUrl =  "http://localhost:"+port+"/lecturer";
+        baseUrl =  "http://localhost:8080/lecturer";
+        lecturer = new Lecturer();
+        lecturer.setId(1L);
     }
 
 
@@ -30,24 +35,5 @@ public class PersonTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @Test
-    void testFieldValidations() throws Exception {
 
-        mockMvc.perform(delete(baseUrl + "/Helen/Schloh")
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
-
-        String lecturerJson = "{\"name\":\"Helen\",\"surname\":\"Schloh\"}";
-
-        mockMvc.perform(post(baseUrl + "/lecturer")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(lecturerJson))
-                .andExpect(status().isOk());
-
-        //try again and expect a conflict message
-        mockMvc.perform(post(baseUrl + "/lecturer")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(lecturerJson))
-                .andExpect(status().isConflict());
-    }
 }

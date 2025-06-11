@@ -13,5 +13,5 @@ import java.util.List;
 @AllArgsConstructor
 public class Lecturer extends  Person {
 
-    private List<String> studentIds;
+    private List<Long> studentIds;
 }

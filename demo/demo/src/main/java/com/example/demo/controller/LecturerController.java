@@ -4,6 +4,7 @@ import com.example.demo.model.Lecturer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import jakarta.validation.Validator;
 import org.springframework.web.bind.annotation.*;
 import com.example.demo.repository.LecturerRepository;
 
@@ -13,11 +14,18 @@ public class LecturerController {
     @Autowired
     LecturerRepository lecturerRepository;
 
+    @Autowired
+    private Validator validator;
+
     @PostMapping
     public ResponseEntity<?> create(@RequestBody Lecturer lecturer) {
         if(lecturerRepository.existsById(lecturer.getId())){
             //throw exception
             return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body("Item already exists");
+        }
+        if(!validator.validate(lecturer).isEmpty()){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body("Item already exists");
         }
          return ResponseEntity.ok(lecturerRepository.save(lecturer));
