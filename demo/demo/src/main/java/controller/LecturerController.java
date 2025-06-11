@@ -2,6 +2,7 @@ package controller;
 
 import model.Lecturer;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import repository.LecturerRepository;
@@ -12,8 +13,13 @@ public class LecturerController {
     LecturerRepository lecturerRepository;
 
     @PostMapping
-    public Lecturer create(@RequestBody Lecturer lecturer) {
-        return lecturerRepository.save(lecturer);
+    public ResponseEntity<?> create(@RequestBody Lecturer lecturer) {
+        if(lecturerRepository.existsById(lecturer.getLecturerId())){
+            //throw exception
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body("Item already exists");
+        }
+         return ResponseEntity.ok(lecturerRepository.save(lecturer));
     }
 
     @GetMapping("/{lecturerId}")

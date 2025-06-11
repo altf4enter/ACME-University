@@ -3,6 +3,7 @@ package controller;
 import model.Lecturer;
 import model.Person;
 import model.Student;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import repository.LecturerRepository;
@@ -14,24 +15,23 @@ public class StudentController {
     private LecturerRepository lecturerRepository;
 
     @PostMapping("/add/{lecturerId}")
-    public Student create(@RequestBody Student student, @PathVariable Long lecturerId) {
+    public ResponseEntity<?> create(@RequestBody Student student, @PathVariable Long lecturerId) {
 
         var lecturer = lecturerRepository.findById(lecturerId);
         var lecturers = student.getLecturerIds();
         if(lecturer.isEmpty(
         )){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("Lecturer doesnt exist");
         }
 
         lecturer.ifPresent(lect -> {
                     lecturers.add(lect.getLecturerId().toString());
                 }
         );
+        student.setLecturerIds(lecturers);
 
-        lecturers.add(lecturer);
-        student.setLecturerIds();
-        studentRepository.save(student);
-
-        return studentRepository.save(student);
+        return ResponseEntity.ok(studentRepository.save(student));
     }
 
     @GetMapping("/{studentId}")
