@@ -8,11 +8,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@Entity
-@Inheritance(strategy = InheritanceType.JOINED)
+@MappedSuperclass
 @NoArgsConstructor
 public class Person {
-
 
     public Person(String name,String surname){
         this.name = name;

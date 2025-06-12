@@ -1,10 +1,9 @@
 package com.example.demo.controller;
 
-import com.example.demo.model.Lecturer;
+import com.example.demo.dto.StudentDTO;
 import com.example.demo.model.Student;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import jakarta.validation.Valid;
-import jakarta.validation.Validator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,7 +12,6 @@ import com.example.demo.repository.LecturerRepository;
 import com.example.demo.repository.StudentRepository;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/student")
@@ -33,6 +31,8 @@ public class StudentController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body("Lecturer doesnt exist");
         }
+
+
         if(student.getLecturers() != null && !student.getLecturers().isEmpty()){
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body("Student cannot have multiple lecturers assigned to on creation.");
@@ -44,14 +44,19 @@ public class StudentController {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body("A student with this ID already exists");
         }
-
-        return ResponseEntity.ok(studentRepository.save(student));
+        var studentSaved = studentRepository.save(student);
+        lecturer.get().getStudents().add(student);
+        lecturerRepository.save(lecturer.get());
+        return ResponseEntity.ok(StudentDTO.toStudentDTO(studentSaved));
     }
 
     @GetMapping("/{studentId}")
-    public ResponseEntity<Student> getStudentById(@PathVariable Long studentId) {
+    public ResponseEntity<StudentDTO> getStudentById(@PathVariable Long studentId) {
         return studentRepository.findById(studentId)
-                .map(ResponseEntity::ok)
+                .map(res -> {
+                    var dto = StudentDTO.toStudentDTO(res);
+                  return  ResponseEntity.ok(dto);
+                })
                 .orElse(ResponseEntity.notFound().build());
     }
 

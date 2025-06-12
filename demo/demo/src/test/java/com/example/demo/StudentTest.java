@@ -68,6 +68,8 @@ public class StudentTest {
         assertEquals(createdStudent.getName(), retrievedStudent.getName());
         assertEquals(createdStudent.getSurname(), retrievedStudent.getSurname());
         assertEquals(createdStudent.getId(), retrievedStudent.getId());
+        assertEquals(1, retrievedStudent.getLecturers().size());
+        assertEquals(createdLecturer.getId(), retrievedStudent.getLecturers().get(0).getId());
 
 
         Integer status = getStudentStatus(-1L);

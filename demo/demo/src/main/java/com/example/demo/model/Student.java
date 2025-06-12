@@ -2,7 +2,6 @@ package com.example.demo.model;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.ManyToMany;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
