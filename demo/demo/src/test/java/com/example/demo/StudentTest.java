@@ -7,8 +7,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
@@ -19,6 +19,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @AutoConfigureMockMvc
 @SpringBootTest
+@ActiveProfiles("test")
 public class StudentTest {
 
     private String baseUrl;
@@ -40,7 +41,7 @@ public class StudentTest {
         student.setName( "Student" );
         student.setSurname("McSurname");
         student.setId(1L);
-        student.setLecturerIds(List.of(lecturer.getId()));
+        student.setLecturers(List.of(lecturer));
     }
 
     @Autowired
@@ -61,13 +62,13 @@ public class StudentTest {
                         .content(objectMapper.writeValueAsString(lecturer)));
 
 
-        mockMvc.perform(post(baseUrl + "/add/" +student.getLecturerIds().get(0))
+        mockMvc.perform(post(baseUrl + "/add/" +student.getLecturers().get(0))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(student)))
                 .andExpect(status().isOk());
 
         //try again and expect a conflict message
-        mockMvc.perform(post(baseUrl+ "/add/" +student.getLecturerIds().get(0))
+        mockMvc.perform(post(baseUrl+ "/add/" +student.getLecturers().get(0))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(student)))
                 .andExpect(status().isConflict());

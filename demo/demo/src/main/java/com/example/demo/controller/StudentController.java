@@ -25,7 +25,7 @@ public class StudentController {
     public ResponseEntity<?> create(@RequestBody Student student, @PathVariable Long lecturerId) {
 
         var lecturer = lecturerRepository.findById(lecturerId);
-        var lecturers = student.getLecturerIds();
+        var lecturers = student.getLecturers();
         if(lecturer.isEmpty(
         )){
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -33,10 +33,10 @@ public class StudentController {
         }
 
         lecturer.ifPresent(lect -> {
-                    lecturers.add(lect.getId());
+                    lecturers.add(lect);
                 }
         );
-        student.setLecturerIds(lecturers);
+        student.setLecturers(lecturers);
 
         if(!studentRepository.findById(student.getId()).isEmpty()){
             return ResponseEntity.status(HttpStatus.CONFLICT)
