@@ -17,6 +17,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -54,8 +55,11 @@ public class LecturerTest {
         Lecturer retrieved = getLecturerById(created.getId());
 
         assertEquals(created.getId(), retrieved.getId());
-        assertEquals(created.getName(), retrieved.getName());
-        assertEquals(created.getSurname(), retrieved.getSurname());
+        assertEquals(lecturer.getName(), retrieved.getName());
+        assertEquals(lecturer.getSurname(), retrieved.getSurname());
+
+        Integer status = getLecturerStatus(-1L);
+        assertEquals(HttpStatus.NOT_FOUND.value(), status);
     }
 
     @Test
@@ -83,6 +87,7 @@ public class LecturerTest {
         MvcResult result = mockMvc.perform(post(baseUrl)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(lecturer)))
+                .andExpect(status().isOk())
                 .andReturn();
 
         String json = result.getResponse().getContentAsString();
@@ -99,9 +104,16 @@ public class LecturerTest {
     public Lecturer getLecturerById(Long id) throws Exception {
         MvcResult result = mockMvc.perform(get(baseUrl + "/" + id)
                         .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
                 .andReturn();
 
         String json = result.getResponse().getContentAsString();
         return objectMapper.readValue(json, Lecturer.class);
+    }
+
+    public int getLecturerStatus(Long lecturerId) throws Exception {
+        return  mockMvc.perform(get(baseUrl + "/" + lecturerId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andReturn().getResponse().getStatus();
     }
 }

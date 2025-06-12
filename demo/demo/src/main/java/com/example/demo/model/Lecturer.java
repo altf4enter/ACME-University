@@ -13,7 +13,6 @@ import java.util.List;
 @Entity
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
 public class Lecturer extends  Person {
 
     public Lecturer(String name, String surname, List<Student> students){

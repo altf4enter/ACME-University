@@ -14,6 +14,8 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -45,9 +47,9 @@ public class StudentTest {
     void testCreateStudent() throws Exception {
         Lecturer createdLecturer = createLecturer(lecturer);
 
-        student.setLecturers(java.util.List.of(createdLecturer));
         Student createdStudent = createStudent(student, createdLecturer.getId());
 
+        createdStudent.setLecturers(List.of());
         Integer createSameStatus = createStudentStatus(createdStudent, createdLecturer.getId());
         assertEquals(HttpStatus.CONFLICT.value(), createSameStatus);
 
@@ -60,14 +62,16 @@ public class StudentTest {
     void testRetrieveStudent() throws Exception {
         Lecturer createdLecturer = createLecturer(lecturer);
 
-        student.setLecturers(java.util.List.of(createdLecturer));
         Student createdStudent = createStudent(student, createdLecturer.getId());
 
         Student retrievedStudent = getStudentById(createdStudent.getId());
-
         assertEquals(createdStudent.getName(), retrievedStudent.getName());
         assertEquals(createdStudent.getSurname(), retrievedStudent.getSurname());
         assertEquals(createdStudent.getId(), retrievedStudent.getId());
+
+
+        Integer status = getStudentStatus(-1L);
+        assertEquals(HttpStatus.NOT_FOUND.value(), status);
     }
 
     private Lecturer createLecturer(Lecturer lecturer) throws Exception {
@@ -99,9 +103,6 @@ public class StudentTest {
                 .andReturn().getResponse().getStatus();
     }
 
-
-
-
     private Student getStudentById(Long studentId) throws Exception {
         MvcResult result = mockMvc.perform(get(baseStudentUrl + "/" + studentId)
                         .contentType(MediaType.APPLICATION_JSON))
@@ -110,5 +111,11 @@ public class StudentTest {
 
         String json = result.getResponse().getContentAsString();
         return objectMapper.readValue(json, Student.class);
+    }
+
+    public int getStudentStatus(Long studentId) throws Exception {
+        return  mockMvc.perform(get(baseStudentUrl + "/" + studentId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andReturn().getResponse().getStatus();
     }
 }

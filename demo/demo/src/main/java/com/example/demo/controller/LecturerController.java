@@ -34,9 +34,4 @@ public class LecturerController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteLecturerById(@PathVariable Long id) {
-        lecturerRepository.deleteById(id);
-        return ResponseEntity.ok("Lecturer has been deleted");
-    }
 }

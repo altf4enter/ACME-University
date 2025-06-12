@@ -33,17 +33,17 @@ public class StudentController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body("Lecturer doesnt exist");
         }
+        if(student.getLecturers() != null && !student.getLecturers().isEmpty()){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Student cannot have multiple lecturers assigned to on creation.");
+        }
 
-        List lecturers = Optional.ofNullable(student.getLecturers()).orElse(
-                List.of()
-        );
+        student.setLecturers(List.of(lecturer.get()));
 
         if (student.getId() != null && studentRepository.existsById(student.getId())) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body("A student with this ID already exists");
         }
-        lecturer.ifPresent(lecturers::add);
-        student.setLecturers(lecturers);
 
         return ResponseEntity.ok(studentRepository.save(student));
     }
@@ -55,9 +55,4 @@ public class StudentController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteStudentById(@PathVariable Long id) {
-        studentRepository.deleteById(id);
-        return ResponseEntity.ok("Student has been deleted");
-    }
 }
