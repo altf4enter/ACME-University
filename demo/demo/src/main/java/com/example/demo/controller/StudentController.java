@@ -1,7 +1,9 @@
 package com.example.demo.controller;
 
+import com.example.demo.model.Lecturer;
 import com.example.demo.model.Student;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
+import jakarta.validation.Valid;
 import jakarta.validation.Validator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -10,42 +12,38 @@ import org.springframework.web.bind.annotation.*;
 import com.example.demo.repository.LecturerRepository;
 import com.example.demo.repository.StudentRepository;
 
+import java.util.List;
+import java.util.Optional;
+
 @RestController
 @RequestMapping("/student")
-@RateLimiter(name = "rateLimit", fallbackMethod = "rateLimitFallback")
+@RateLimiter(name = "rateLimit")
 public class StudentController {
     @Autowired
     private StudentRepository studentRepository;
     @Autowired
     private LecturerRepository lecturerRepository;
-    @Autowired
-    private Validator validator;
+
 
     @PostMapping("/add/{lecturerId}")
-    public ResponseEntity<?> create(@RequestBody Student student, @PathVariable Long lecturerId) {
+    public ResponseEntity<?> create(@Valid @RequestBody Student student, @PathVariable Long lecturerId) {
 
         var lecturer = lecturerRepository.findById(lecturerId);
-        var lecturers = student.getLecturers();
-        if(lecturer.isEmpty(
-        )){
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+        if(lecturer.isEmpty()){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body("Lecturer doesnt exist");
         }
 
-        lecturer.ifPresent(lect -> {
-                    lecturers.add(lect);
-                }
+        List lecturers = Optional.ofNullable(student.getLecturers()).orElse(
+                List.of()
         );
-        student.setLecturers(lecturers);
 
-        if(!studentRepository.findById(student.getId()).isEmpty()){
+        if (student.getId() != null && studentRepository.existsById(student.getId())) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body("Item already exists");
-        };
-        if(!validator.validate(student).isEmpty()){
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("Item already exists");
+                    .body("A student with this ID already exists");
         }
+        lecturer.ifPresent(lecturers::add);
+        student.setLecturers(lecturers);
 
         return ResponseEntity.ok(studentRepository.save(student));
     }
@@ -60,7 +58,6 @@ public class StudentController {
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteStudentById(@PathVariable Long id) {
         studentRepository.deleteById(id);
-
         return ResponseEntity.ok("Student has been deleted");
     }
 }

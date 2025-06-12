@@ -16,6 +16,11 @@ import java.util.List;
 @AllArgsConstructor
 public class Lecturer extends  Person {
 
+    public Lecturer(String name, String surname, List<Student> students){
+        super(name,surname);
+       this.students = students;
+    }
+
     @ManyToMany
     @JoinTable(
             name = "lecturer_student",

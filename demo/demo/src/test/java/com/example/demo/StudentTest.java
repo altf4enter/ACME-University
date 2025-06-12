@@ -1,48 +1,33 @@
 package com.example.demo;
 
 import com.example.demo.model.Lecturer;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.example.demo.model.Student;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-import java.util.List;
-
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@AutoConfigureMockMvc
 @SpringBootTest
+@AutoConfigureMockMvc
 @ActiveProfiles("test")
 public class StudentTest {
 
-    private String baseUrl;
-    private String baseLecturerUrl;
-    Student student;
-    Lecturer lecturer;
+    private final String baseStudentUrl = "/student";
+    private final String baseLecturerUrl = "/lecturer";
 
-
-    StudentTest(){
-        baseUrl =  "http://localhost:8080/student";
-        baseLecturerUrl =  "http://localhost:8080/lecturer";
-
-        lecturer = new Lecturer( );
-        lecturer.setId(2L);
-        lecturer.setName("Lecturer");
-        lecturer.setSurname("McSurname");
-
-        student = new Student( );
-        student.setName( "Student" );
-        student.setSurname("McSurname");
-        student.setId(1L);
-        student.setLecturers(List.of(lecturer));
-    }
+    private Lecturer lecturer;
+    private Student student;
 
     @Autowired
     private MockMvc mockMvc;
@@ -50,46 +35,80 @@ public class StudentTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @BeforeEach
+    void setup() {
+        lecturer = new Lecturer("Lecturer", "McSurname", null);
+        student = new Student("Student", "McSurname", null);
+    }
+
     @Test
     void testCreateStudent() throws Exception {
+        Lecturer createdLecturer = createLecturer(lecturer);
 
-        mockMvc.perform(delete(baseUrl + "/" + student.getId() )
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
+        student.setLecturers(java.util.List.of(createdLecturer));
+        Student createdStudent = createStudent(student, createdLecturer.getId());
 
-        mockMvc.perform(post(baseLecturerUrl )
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(lecturer)));
+        Integer createSameStatus = createStudentStatus(createdStudent, createdLecturer.getId());
+        assertEquals(HttpStatus.CONFLICT.value(), createSameStatus);
 
+        createSameStatus = createStudentStatus(createdStudent, -1L);
+        assertEquals(HttpStatus.BAD_REQUEST.value(), createSameStatus);
 
-        mockMvc.perform(post(baseUrl + "/add/" +student.getLecturers().get(0))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(student)))
-                .andExpect(status().isOk());
-
-        //try again and expect a conflict message
-        mockMvc.perform(post(baseUrl+ "/add/" +student.getLecturers().get(0))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(student)))
-                .andExpect(status().isConflict());
     }
 
     @Test
     void testRetrieveStudent() throws Exception {
-        mockMvc.perform(post(baseLecturerUrl )
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(lecturer)));
+        Lecturer createdLecturer = createLecturer(lecturer);
 
-        mockMvc.perform(post(baseUrl + "/add/"+lecturer.getId())
+        student.setLecturers(java.util.List.of(createdLecturer));
+        Student createdStudent = createStudent(student, createdLecturer.getId());
+
+        Student retrievedStudent = getStudentById(createdStudent.getId());
+
+        assertEquals(createdStudent.getName(), retrievedStudent.getName());
+        assertEquals(createdStudent.getSurname(), retrievedStudent.getSurname());
+        assertEquals(createdStudent.getId(), retrievedStudent.getId());
+    }
+
+    private Lecturer createLecturer(Lecturer lecturer) throws Exception {
+        MvcResult result = mockMvc.perform(post(baseLecturerUrl)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(student)));
+                        .content(objectMapper.writeValueAsString(lecturer)))
+                .andExpect(status().isOk())
+                .andReturn();
 
-        MvcResult res = mockMvc.perform(get(baseUrl+"/" + student.getId())
+        String json = result.getResponse().getContentAsString();
+        return objectMapper.readValue(json, Lecturer.class);
+    }
+
+    private Student createStudent(Student student, Long lecturerId) throws Exception {
+        MvcResult result = mockMvc.perform(post(baseStudentUrl + "/add/" + lecturerId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(student)))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String json = result.getResponse().getContentAsString();
+        return objectMapper.readValue(json, Student.class);
+    }
+
+    public int createStudentStatus(Student student, Long lecturerId) throws Exception {
+        return mockMvc.perform(post(baseStudentUrl + "/add/" + lecturerId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(student)))
+                .andReturn().getResponse().getStatus();
+    }
+
+
+
+
+    private Student getStudentById(Long studentId) throws Exception {
+        MvcResult result = mockMvc.perform(get(baseStudentUrl + "/" + studentId)
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk()).andReturn();
+                .andExpect(status().isOk())
+                .andReturn();
 
-        String resJson = res.getResponse().getContentAsString();
-        Student responseStudent = objectMapper.readValue(resJson, Student.class);
-
+        String json = result.getResponse().getContentAsString();
+        return objectMapper.readValue(json, Student.class);
     }
 }

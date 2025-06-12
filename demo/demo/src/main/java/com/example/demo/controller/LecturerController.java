@@ -2,6 +2,7 @@ package com.example.demo.controller;
 
 import com.example.demo.model.Lecturer;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -11,24 +12,17 @@ import com.example.demo.repository.LecturerRepository;
 
 @RestController
 @RequestMapping("/lecturer")
-@RateLimiter(name = "rateLimit", fallbackMethod = "rateLimitFallback")
+@RateLimiter(name = "rateLimit")
 public class LecturerController {
     @Autowired
     LecturerRepository lecturerRepository;
 
-    @Autowired
-    private Validator validator;
 
     @PostMapping
-    public ResponseEntity<?> create(@RequestBody Lecturer lecturer) {
-        if(lecturerRepository.existsById(lecturer.getId())){
-            //throw exception
+    public ResponseEntity<?> create(@Valid @RequestBody Lecturer lecturer) {
+        if (lecturer.getId() != null && lecturerRepository.existsById(lecturer.getId())) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body("Item already exists");
-        }
-        if(!validator.validate(lecturer).isEmpty()){
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("Item already exists");
+                    .body("A lecturer with this ID already exists");
         }
          return ResponseEntity.ok(lecturerRepository.save(lecturer));
     }
@@ -43,7 +37,6 @@ public class LecturerController {
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteLecturerById(@PathVariable Long id) {
         lecturerRepository.deleteById(id);
-
         return ResponseEntity.ok("Lecturer has been deleted");
     }
 }
