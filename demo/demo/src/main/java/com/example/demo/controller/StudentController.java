@@ -1,6 +1,7 @@
 package com.example.demo.controller;
 
 import com.example.demo.model.Student;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import jakarta.validation.Validator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -11,6 +12,7 @@ import com.example.demo.repository.StudentRepository;
 
 @RestController
 @RequestMapping("/student")
+@RateLimiter(name = "rateLimit", fallbackMethod = "rateLimitFallback")
 public class StudentController {
     @Autowired
     private StudentRepository studentRepository;
