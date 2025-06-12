@@ -1,5 +1,7 @@
 package com.example.demo;
 
+import com.example.demo.dto.LecturerDTO;
+import com.example.demo.dto.StudentSummaryDTO;
 import com.example.demo.model.Lecturer;
 import com.example.demo.model.Student;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -17,6 +19,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -54,7 +57,7 @@ public class StudentTest {
         assertEquals(HttpStatus.CONFLICT.value(), createSameStatus);
 
         createSameStatus = createStudentStatus(createdStudent, -1L);
-        assertEquals(HttpStatus.BAD_REQUEST.value(), createSameStatus);
+        assertEquals(HttpStatus.NOT_FOUND.value(), createSameStatus);
 
     }
 
@@ -71,6 +74,10 @@ public class StudentTest {
         assertEquals(1, retrievedStudent.getLecturers().size());
         assertEquals(createdLecturer.getId(), retrievedStudent.getLecturers().get(0).getId());
 
+        LecturerDTO lecturerDTO = getLecturerById(createdLecturer.getId());
+        assertEquals(1, lecturerDTO.getStudents().size());
+        assertTrue(lecturerDTO.getStudents().contains(StudentSummaryDTO.toStudentSummaryDTO(retrievedStudent)));
+
 
         Integer status = getStudentStatus(-1L);
         assertEquals(HttpStatus.NOT_FOUND.value(), status);
@@ -85,6 +92,16 @@ public class StudentTest {
 
         String json = result.getResponse().getContentAsString();
         return objectMapper.readValue(json, Lecturer.class);
+    }
+
+    public LecturerDTO getLecturerById(Long id) throws Exception {
+        MvcResult result = mockMvc.perform(get(baseLecturerUrl + "/" + id)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String json = result.getResponse().getContentAsString();
+        return objectMapper.readValue(json, LecturerDTO.class);
     }
 
     private Student createStudent(Student student, Long lecturerId) throws Exception {

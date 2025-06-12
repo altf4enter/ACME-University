@@ -28,7 +28,7 @@ public class StudentController {
 
         var lecturer = lecturerRepository.findById(lecturerId);
         if(lecturer.isEmpty()){
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body("Lecturer doesnt exist");
         }
 

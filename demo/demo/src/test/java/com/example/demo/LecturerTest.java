@@ -1,5 +1,6 @@
 package com.example.demo;
 
+import com.example.demo.dto.LecturerDTO;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.example.demo.model.Lecturer;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,6 +15,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -52,7 +54,7 @@ public class LecturerTest {
     @Test
     void testRetrieveLecturer() throws Exception {
         Lecturer created = createLecturer(lecturer);
-        Lecturer retrieved = getLecturerById(created.getId());
+        LecturerDTO retrieved = getLecturerById(created.getId());
 
         assertEquals(created.getId(), retrieved.getId());
         assertEquals(lecturer.getName(), retrieved.getName());
@@ -101,14 +103,14 @@ public class LecturerTest {
                 .andReturn().getResponse().getStatus();
     }
 
-    public Lecturer getLecturerById(Long id) throws Exception {
+    public LecturerDTO getLecturerById(Long id) throws Exception {
         MvcResult result = mockMvc.perform(get(baseUrl + "/" + id)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andReturn();
 
         String json = result.getResponse().getContentAsString();
-        return objectMapper.readValue(json, Lecturer.class);
+        return objectMapper.readValue(json, LecturerDTO.class);
     }
 
     public int getLecturerStatus(Long lecturerId) throws Exception {

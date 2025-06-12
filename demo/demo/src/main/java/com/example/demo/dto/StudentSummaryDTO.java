@@ -10,7 +10,7 @@ public class StudentSummaryDTO {
     private String name;
     private String surname;
 
-    public StudentSummaryDTO toStudentSummaryDTO(Student student) {
+    public static StudentSummaryDTO toStudentSummaryDTO(Student student) {
         StudentSummaryDTO summary = new StudentSummaryDTO();
         summary.setId(student.getId());
         summary.setName(student.getName());

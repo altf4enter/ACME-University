@@ -17,7 +17,6 @@ public class Person {
         this.surname = surname;
     }
 
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
